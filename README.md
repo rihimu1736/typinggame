@@ -1,4 +1,4 @@
-# typinggame
+# Typing game
 It is a typing game for PC.
 
 How to play
