@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>タイピングゲーム</title>
+        <link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css">
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <h1>タイピングゲーム</h1>
+        <div id="setting">
+            <b>出題数</b>
+            <select id="number" > <!--問題数選択-->
+                <option value="2" selected >2</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+            </select>
+
+            <b>音量</b><!--音量バー設定-->
+            <input id="volumeControl" type="range" min="0" max="1" step="0.1" value="0.5">
+
+
+            <label>
+                <input type="radio" name="language" value="ja"checked>全角(日本語)
+            </label>
+            <label>
+                <input type="radio" name="language" value="en">半角(英語)
+            </label>
+
+
+            <div id="main">
+                <div id="startMenu">
+                    <button id="start" onclick="clicked();"><b>スタート</b></button> <!--スタートボタン-->
+                    <p id="enterStart">Enterを押してスタート</p>
+                </div>
+
+                <div id="">
+            
+                <!--最初はnoneで隠す。ゲームが始まったらdisplay:block;で見えるようにする-->
+                <div id="gameview"class="hidden">
+                    <div id="numberView"></div> <!--問題番号表示-->
+                    <div id="game"></div><!--問題表示-->
+                    <input id="input" type="text"><!--入力欄-->
+                    <div id="mainBack">escapeキーでトップに戻る</div>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            //コンストラクタ？
+            const numberElement=document.getElementById("number");
+            const startMenu=document.getElementById("startMenu");
+            const startButton=document.getElementById("start");
+            const gameview=document.getElementById("gameview");
+            const numberView=document.getElementById("numberView");
+            const game=document.getElementById("game");
+            const input=document.getElementById("input");
+            const mainBack=document.getElementById("mainBack");
+
+            let numberValue;  //問題数
+            let currentWord = '';  //問題文
+            let gameCount = 0;  //現在の問題数を保存
+            let startTime;  //スタートボタンを押した時間
+            let incorrectNumber = 0;  //間違えた問題数
+            let checkValue;
+       
+
+            const correctSound = new Audio('sound/correct.mp3');  //効果音
+            const incorrectSound = new Audio('sound/incorrect.mp3');
+
+            //問題文
+            const textList_Japanese = [
+                '今日は晴れたので散歩に行こう',
+                '映画館で新作を観る予定です',
+                'おいしい料理を作るのが好きです',
+                '友達とカフェでおしゃべりしました',
+                '趣味は読書と映画鑑賞です',
+                '次の旅行はどこに行こうかな',
+                '朝ごはんにはパンとコーヒーです',
+                '花火大会が楽しみで待ち遠しい',
+                '音楽を聴きながらリラックスします',
+                '最近ハイキングに行くことが多い',
+                '大好きな猫と一緒に過ごす時間',
+                '週末は家族とバーベキューをする',
+                'スポーツ観戦が趣味の友達がいる',
+                '新しい本を買ったので読んでみる',
+                '冬は温泉旅行に行くのが楽しみ',
+                '昔の写真を見て懐かしく思う',
+                'サッカーの試合が近づいてきた',
+                '健康のために毎日運動をしています',
+                '美術館で素敵な作品を鑑賞した',
+                '休日はのんびり過ごすことが大切',
+                '新しいレシピに挑戦するのが楽しい',
+                'お菓子作りが好きな友達',
+                '週末に家族とドライブに行く予定',
+                '読書が好きなので図書館に行った',
+                '音楽フェスに参加するのが夢です',
+                '友達の誕生日パーティーを計画中',
+                'コーヒーを飲みながら本を読む時間',
+                '春の花が咲くのを楽しみにしている',
+                '旅行先での写真をたくさん撮りました',
+                '趣味を通じて新しい友達ができた',
+                '最新のテクノロジーに興味があります',
+                '料理教室で新しいレシピを学んだ',
+                '友人と一緒にキャンプに行きたい',
+                '健康を考えて野菜中心の食事に',
+                '本格的なコーヒーを自宅で楽しむ',
+                '新しい趣味として写真を始めました',
+                '家庭菜園で野菜を育てることに挑戦',
+                '音楽制作に挑戦してみたいと思う',
+                '環境問題についてもっと知りたいです',
+                '海外の文化を学ぶのが大好きです',
+                '手作りのアクセサリーを作るのが趣味',
+                '地元のイベントに参加する',
+                '自然の中でリフレッシュする',
+                '古い映画を見て感動する',
+                '新しい言語を学ぶことに挑戦中です',
+                'おいしいスイーツを作ってみたいな',
+                'アートイベントで作品を展示したい',
+                'フィットネスで健康を維持することが目標',
+                '猫の動画を見て癒される時間が好き',
+                '世界遺産を巡る旅を計画しています',
+                '友達と一緒にボードゲームを楽しむ',
+                '家でゆっくりと映画を観る休日',
+                '笑いが絶えない楽しい時間を過ごす',
+                '美味しいお茶を飲みながらリラックス',
+                'DIYプロジェクトに挑戦する',
+                '飼っている犬と毎日散歩に行く',
+                '大好きな本を何度も読み返しています',
+                '自分のブログを始めてみたいです',
+                '趣味の絵を描くことでストレス発散',
+                '自転車でのんびりとした旅を楽しむ'
+            ];
+            
+            const textList_English = [
+                'hello', 
+                'good morning', 
+                'good bye', 
+                'good night', 
+                'sorry'
+            ];
+
+
+            //スタートボタンが押された時の処理
+            function clicked(){
+                document.removeEventListener("keydown", event);
+                const language = document.getElementsByName("language");
+                let len = language.length;
+                
+                for(let i = 0 ; i < len ; i++){
+                    if(language.item(i).checked){
+                        checkValue = language.item(i).value;
+                    }
+                }
+                
+
+                numberValue = parseInt(numberElement.value, 10);
+                startMenu.classList.add("hidden");
+                gameview.classList.remove("hidden");
+
+                startTime = Date.now();
+
+                gameCount = 0;
+                input.value = '';
+                nextQuestion();
+                
+                input.addEventListener("keydown", checkInput);
+            }
+
+            function nextQuestion(){
+                if (gameCount >= numberValue) {
+                    const endTime = Date.now();
+                    const time = (endTime - startTime)/1000;
+               
+                    const minuteTime = Math.floor(time / 60);
+                    const secondTime = time % 60;
+                    
+                    
+                    gameview.innerHTML = `<b>ゲーム終了です<br>経過時間：${minuteTime}分${Math.round(secondTime)}秒<br>間違えた回数：${incorrectNumber}<br></b>`;
+                    gameview.innerHTML +=`<div id="j">escapeキーを押して戻る<br></div>`;
+                    
+                    input.removeEventListener("keydown", checkInput);
+                    
+                    return;
+                }
+
+                numberView.innerHTML = `<b>${gameCount+1}/${numberValue}<br></b>`;
+
+                if(checkValue === "en"){
+                    const rnd = Math.floor(Math.random()*textList_English.length);
+                    currentWord = textList_English[rnd];
+                }else{
+                    const rnd = Math.floor(Math.random()*textList_Japanese.length);
+                    currentWord = textList_Japanese[rnd];
+                }
+                
+                game.textContent = currentWord;
+                input.value = '';
+                input.focus();
+                
+            }
+            
+            
+            function checkInput(event) {
+
+                if(checkValue === "ja"){
+                    if(event.isComposing === false){
+                        if (event.code === "Enter") {
+                        
+                            if (input.value === currentWord) {
+                                correctSound.play();
+                                gameCount += 1;
+                                nextQuestion();  // 次の問題を表示
+                            } else {
+                                incorrectSound.play();
+                                incorrectNumber += 1;
+                            }
+                            input.value = '';
+                        }
+                        
+                    }
+                   
+                }else{
+                    if (event.code === "Enter") {
+                        firstEnterPressed = false;
+                        if (input.value === currentWord) {
+                            correctSound.play();
+                            gameCount += 1;
+                            nextQuestion();  // 次の問題を表示
+                        } else {
+                            incorrectSound.play();
+                            incorrectNumber += 1;
+                        }
+                        input.value = '';
+                    }
+                }
+                
+
+            
+            }
+        
+        
+            document.getElementById("volumeControl").addEventListener('input', (event) =>{
+                correctSound.volume = event.target.value;
+                incorrectSound.volume = event.target.value;
+            })
+
+            document.addEventListener("keydown", (event) => {
+                if(event.key === "Escape"){
+                    window.location.reload();
+                }
+            })
+
+            document.addEventListener("keydown", (event) => {
+                if(event.key === "Enter"){
+                    if(gameview.classList.contains("hidden")){
+                        clicked();
+                    }
+                }
+            })
+            
+            
+            
+        </script>
+
+    </body>
+</html>
